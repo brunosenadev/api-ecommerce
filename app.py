@@ -17,7 +17,6 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), nullable=False, unique=True)
     password = db.Column(db.String(80), nullable=False)
-
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
@@ -38,6 +37,16 @@ def add_product():
         db.session.commit()
         return jsonify({"message": "Product added successfully"})
     return jsonify({'message': 'Invalid product data'}), 400
+
+@app.route('/api/users/add', methods=['POST'])
+def add_user():
+    data = request.json
+    if 'username' in data and 'password' in data:
+        user = User(username=data['username'], password=data['password'])
+        db.session.add(user)
+        db.session.commit()
+        return jsonify({"message": "User added successfully"})
+    return jsonify({"message": "Invalid user data"}), 400
 
 @app.route('/api/products/delete/<int:product_id>', methods=['DELETE'])
 @login_required
@@ -86,7 +95,7 @@ def get_products():
             "id": product.id,
             "name": product.name,
             "price": product.price
-        }
+        } 
         product_list.append(product_data)
     return jsonify(product_list)
 
