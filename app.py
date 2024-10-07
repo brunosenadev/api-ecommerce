@@ -61,7 +61,16 @@ def update_product(product_id):
 @app.route('/api/products', methods=['GET'])
 def get_products():
     products = Product.query.all()
-    if products:
+    product_list = []
+    for product in products:
+        product_data = {
+            "id": product.id,
+            "name": product.name,
+            "description": product.description,
+            "price": product.price
+        }
+        product_list.append(product_data)
+    return jsonify(product_list)
         
 
 @app.route('/')
