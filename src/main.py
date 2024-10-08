@@ -1,20 +1,20 @@
 from flask import Flask, request
 from flask_cors import CORS
 from flask_login import LoginManager, login_required, current_user
-from database import config_database_uri
 from utils import json_format
-from login import login, logout
 from product import add_product, delete_product, get_product_details, update_product, get_all_products
 from user import returns_current_user, add_user
 from cart import add_to_cart, delete_from_cart, view_cart_items, checkout
+from database import Database
 
 app = Flask(__name__)
 login_manager = LoginManager()
 app.config['SECRET_KEY'] = "my_key_python"
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ecommerce.db'
 login_manager.init_app(app)
 login_manager.login_view = 'login'
-config_database_uri(app)
 CORS(app)
+database_class = Database(app)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -22,6 +22,7 @@ def load_user(user_id):
 
 @app.route('/login', methods=['POST'])
 def route_login():
+    from login import login
     data = request.json
     response = login(data.get('username'), data.get('password'))
     return response
@@ -29,6 +30,7 @@ def route_login():
 @app.route('/logout', methods=['POST'])
 @login_required
 def route_logout():
+    from login import logout
     response = logout()
     return response
 
