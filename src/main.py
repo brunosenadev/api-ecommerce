@@ -1,156 +1,101 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request
 from flask_cors import CORS
-from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
+from flask_login import LoginManager, login_required, current_user
+from database import config_database_uri
+from utils import json_format
+from login import login, logout
+from product import add_product, delete_product, get_product_details, update_product, get_all_products
+from user import returns_current_user, add_user
+from cart import add_to_cart, delete_from_cart, view_cart_items, checkout
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = "my_key_python"
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ecommerce.db'
-
 login_manager = LoginManager()
+app.config['SECRET_KEY'] = "my_key_python"
 login_manager.init_app(app)
 login_manager.login_view = 'login'
+config_database_uri(app)
 CORS(app)
-class ApiEcommerce():    
-    @login_manager.user_loader
-    def load_user(user_id):
-        return User.query.get(int(user_id))
 
-    @app.route('/api/products/add', methods=['POST'])
-    @login_required
-    def add_product():
-        data = request.json
-        if 'name' in data and 'price' in data: 
-            product = Product(name=data['name'], price=data['price'], description=data.get('description', ''))
-            db.session.add(product)
-            db.session.commit()
-            return jsonify({"message": "Product added successfully"})
-        return jsonify({"message": "Invalid product data"}), 400
+@login_manager.user_loader
+def load_user(user_id):
+    return returns_current_user(int(user_id))
 
-    @app.route('/api/users/add', methods=['POST'])
-    def add_user():
-        data = request.json
-        if 'username' in data and 'password' in data:
-            user = User(username=data['username'], password=data['password'])
-            db.session.add(user)
-            db.session.commit()
-            return jsonify({"message": "User added successfully"})
-        return jsonify({"message": "Invalid user data"}), 400
+@app.route('/login', methods=['POST'])
+def route_login():
+    data = request.json
+    response = login(data.get('username'), data.get('password'))
+    return response
 
-    @app.route('/api/products/delete/<int:product_id>', methods=['DELETE'])
-    @login_required
-    def delete_product(product_id):
-        product = Product.query.get(product_id)
-        if product:
-            db.session.delete(product)
-            db.session.commit()
-            return jsonify({ 'message': 'Product deleted successfully'})
-        return jsonify({ 'message': 'Product not found'}), 404
+@app.route('/logout', methods=['POST'])
+@login_required
+def route_logout():
+    response = logout()
+    return response
 
-    @app.route('/api/products/<int:product_id>', methods=['GET'])
-    def get_product_details(product_id):
-        product = Product.query.get(product_id)
-        if product:
-            return jsonify({
-                "id": product.id,
-                "name": product.name,
-                "description": product.description,
-                "price": product.price
-            })
-        return jsonify({"message": "Product not found"}), 404
+@app.route('/api/products/add', methods=['POST'])
+@login_required
+def route_add_product():
+    data = request.json
+    if 'name' in data and 'price' in data:
+        response = add_product(data['name'], data['price'], data.get('description', ''))
+        return response
+    return json_format('Invalid product data', 400)
 
-    @app.route('/api/products/update/<int:product_id>', methods=['PUT'])
-    @login_required
-    def update_product(product_id):
-        product = Product.query.get(product_id)
-        if not product:
-            return jsonify({ "message": "Product not found" }), 404
-        data = request.json
-        if 'name' in data:
-            product.name = data['name']
-        if 'price' in data:
-            product.price = data['price']
-        if 'description' in data:
-            product.description = data['description']
-        db.session.commit()
-        return jsonify({"message": "Product updated successfully"})
+@app.route('/api/products/delete/<int:product_id>', methods=['DELETE'])
+@login_required
+def route_delete_product(product_id):
+    response = delete_product(product_id)
+    return response
 
-    @app.route('/api/products', methods=['GET'])
-    def get_products():
-        products = Product.query.all()
-        product_list = []
-        for product in products:
-            product_data = {
-                "id": product.id,
-                "name": product.name,
-                "price": product.price
-            } 
-            product_list.append(product_data)
-        return jsonify(product_list)
+@app.route('/api/products/<int:product_id>', methods=['GET'])
+def route_get_product_details(product_id):
+    response = get_product_details(product_id)
+    return response
 
-    @app.route('/login', methods=['POST'])
-    def login():
-        data = request.json
-        user = User.query.filter_by(username=data.get('username')).first()
-        if user and data.get('password') == user.password:
-                login_user(user)
-                return jsonify({"message": "Logged in successfully"})
-        return jsonify({"message": "Unauthorized. Invalid credentials"}), 401
+@app.route('/api/products/update/<int:product_id>', methods=['PUT'])
+@login_required
+def route_update_product(product_id):
+    data = request.json
+    name = data.get('name', '')
+    price = data.get('price', '')
+    description = data.get('description', '')
+    response = update_product(product_id, name, price, description)
+    return response
 
-    @app.route('/logout', methods=['POST'])
-    @login_required
-    def logout():
-        logout_user()
-        return jsonify({"message": "Logout successfully"})
+@app.route('/api/products', methods=['GET'])
+def route_get_all_products():
+    response = get_all_products()
+    return response
 
-    @app.route('/api/cart/add/<int:product_id>', methods=['POST'])
-    @login_required
-    def add_to_cart(product_id):
-        user = User.query.get(current_user.id)
-        product = Product.query.get(product_id)
-        if user and product:
-            cart_item = CartItem(user_id=user.id, product_id=product.id)
-            db.session.add(cart_item)
-            db.session.commit()
-            return jsonify({"message": "Item added to the cart successfully"})
-        return jsonify({"message": "Failed to add item to the cart"}), 400
-            
-    @app.route('/api/cart/remove/<int:product_id>', methods=["POST"])
-    @login_required
-    def remove_from_cart(product_id):
-        cart_item = CartItem.query.filter_by(user_id=current_user.id, product_id=product_id).first()
-        if cart_item:
-            db.session.delete(cart_item)
-            db.session.commit()
-            return jsonify({"message": "Item removed from the cart successfully"})
-        return jsonify({"message": "Failed to remove item from the cart"}), 400
+@app.route('/api/users/add', methods=['POST'])
+def route_add_user():
+    data = request.json
+    response = add_user(data.get('username', ''), data.get('password', ''))
+    return response
 
-    @app.route('/api/cart', methods=['GET'])
-    @login_required
-    def view_cart():
-        user = User.query.get(int(current_user.id))
-        cart_items = user.cart
-        cart_content = []
-        for item in cart_items:
-            product = Product.query.ger(item.product_id)
-            cart_content.append({
-                "id": item.id,
-                "product_id": item.product_id,
-                "product_name": product.name,
-                "product_price": product.price
-            })
-        return jsonify(cart_content)
-
-    @app.route('/api/cart/checkout', methods=["POST"])
-    @login_required
-    def checkout():
-        user = User.query.get(int(current_user.id))
-        cart_items = user.cart
-        for item in cart_items:
-            db.session.delete(item)
-        db.session.commit()
-        return jsonify({"messsage": "Checkout successful. Cart has been cleared"})
+@app.route('/api/cart/add/<int:product_id>', methods=['POST'])
+@login_required
+def route_add_to_cart(product_id):
+    response = add_to_cart(product_id, current_user.id)
+    return response
         
+@app.route('/api/cart/remove/<int:product_id>', methods=["POST"])
+@login_required
+def route_remove_from_cart(product_id):
+    response = delete_from_cart(product_id, current_user.id)
+    return response
 
+@app.route('/api/cart', methods=['GET'])
+@login_required
+def route_view_cart():
+    response = view_cart_items(int(current_user.id))
+    return response
+
+@app.route('/api/cart/checkout', methods=["POST"])
+@login_required
+def route_checkout():
+    response = checkout(int(current_user.id))
+    return response
 
 if __name__ == '__main__':
     app.run(debug=True, port=3333)
