@@ -1,1 +1,1 @@
-from .cart import add_to_cart, delete_from_cart, view_cart_items, checkout
+from .cart import CartClass
