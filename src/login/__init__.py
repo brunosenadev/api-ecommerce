@@ -1,1 +1,1 @@
-from login import returns_current_user, login, logout
+from login import make_login, make_logout
