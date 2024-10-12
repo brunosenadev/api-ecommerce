@@ -34,7 +34,7 @@ Bem-vindo à E-commerce API! Este é um projeto de exemplo desenvolvido para fin
   git clone https://github.com/brunosenadev/api-ecommerce.git
   cd api-ecommerce
 ```
-2 - Crie um ambiente virtual e ative-o::
+2 - Crie um ambiente virtual e ative-o:
  ```bash
   python -m venv venv
   source venv/bin/activate   # Linux/macOS
