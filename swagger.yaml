@@ -6,9 +6,7 @@ info:
 host: 127.0.0.1:5000
 schemes:
   - http
-
 paths:
-
   /login:
     post:
       summary: Log in
@@ -42,6 +40,31 @@ paths:
           description: Logout successfully
         401:
           description: Unauthorized. Invalid credentials
+
+  /api/users/add:
+    post:
+      summary: Create a new user
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              username:
+                type: string
+              password:
+                type: string
+      responses:
+        200:
+          headers: 
+            Set-Cookie:
+              type: string
+
+          description: User added successfully
+
+        401:
+          description: Invalid user data
   
   /api/products:
     get:
@@ -72,25 +95,6 @@ paths:
             $ref: '#/definitions/Product'
         404:
           description: Not Found. Product not available.
-
-  /api/products/search:
-    get:
-      summary: Search for products
-      parameters:
-        - name: q
-          in: query
-          type: string
-          required: true
-          description: Search query
-      responses:
-        200:
-          description: Returns a list of products matching the search query
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/Product'
-        404:
-          description: Not Found. No products found for the search query.
 
   /api/products/add:
     post:
