@@ -42,7 +42,7 @@ Bem-vindo à E-commerce API! Este é um projeto de exemplo desenvolvido para fin
 ```
  3 - Instale as dependências:
  ```bash
-  pip install -r requirements.txte
+  pip install -r requirements.txt
 ```
 4 - Execute a aplicação:
 ```bash
