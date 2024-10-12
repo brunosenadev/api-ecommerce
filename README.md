@@ -46,7 +46,7 @@ Bem-vindo à E-commerce API! Este é um projeto de exemplo desenvolvido para fin
 ```
 4 - Execute a aplicação:
 ```bash
-  python src/main.python
+  python src/main.py
 ```
 ## Rotas disponíveis
 
