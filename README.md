@@ -18,7 +18,7 @@ Bem-vindo à E-commerce API! Este é um projeto de exemplo desenvolvido para fin
 - Login e logout de usuário 
 - Criação de novos usuários
 - CRUD de produtos (criar, listar, atualizar, consultar e excluir produtos)
-- Criação e checkout de carrinhos de compras validando usuário
+- CRUD de carrinhos de compras (criar, atualizar, consultar e checkout excluindo o carrinho) validando usuário logado
 
 ## Como Executar o Projeto
 
